@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, Optional
 
-from app.core.auth import Role
-from app.models.user import User
+from ..core.auth import Role
+from ..models.user import User
 
 
 class InMemoryUserService:

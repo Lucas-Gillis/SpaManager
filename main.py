@@ -3,7 +3,6 @@ from app.main import create_app
 
 app = create_app()
 
-
 @app.get("/")
 @auth_config(required=False)
 async def root():

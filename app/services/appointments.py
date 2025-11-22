@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 from itertools import count
 from typing import Dict, Iterable, Optional
 
-from app.models.appointments import Appointment, AppointmentCreate, AppointmentStatus
+from ..models.appointments import Appointment, AppointmentCreate, AppointmentStatus
+
 
 
 class InMemoryAppointmentService:

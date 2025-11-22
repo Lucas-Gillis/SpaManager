@@ -2,13 +2,12 @@ from typing import List
 
 from fastapi import APIRouter, HTTPException, Path, status
 
-from app.core.auth import Role, auth_config
-from app.models.clients import Client, ClientCreate
-from app.services.clients import InMemoryClientService
+from ..core.auth import Role, auth_config
+from ..models.clients import Client, ClientCreate
+from ..services.clients import InMemoryClientService
 
 router = APIRouter()
 client_service = InMemoryClientService()
-
 
 @router.get("/", response_model=List[Client], summary="List clients")
 @auth_config(minimum_role=Role.STAFF)

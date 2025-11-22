@@ -1,7 +1,9 @@
 from datetime import date, timedelta
 from typing import Dict, Iterable, Optional
 
-from app.models.clients import Client, ClientCreate
+from ..models.clients import Client, ClientCreate
+
+
 
 
 class InMemoryClientService:

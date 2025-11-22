@@ -1,26 +1,29 @@
 from functools import lru_cache
 
+from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
-class Settings(BaseSettings):
-    app_name: str = Field(os.environ.get('APP_NAME', 'Name'))
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
-    version: str =  Field(os.environ.get('APP_VERSION', '0.1.0'))
-    jwt_secret_key: str = Field(os.environ.get('JWT_SECRET_KEY', 'change-me!'))
-    jwt_algorithm: str = Field(os.environ.get('JWT_ALGORITHM', 'HS256'))
-    jwt_expiration_minutes: str = Field(os.environ.get('JWT_EXPIRATION_MINUTES', '60'))
+class Settings(BaseSettings):
+    """Application configuration sourced from environment variables."""
+
+    app_name: str = Field(default="Spa Manager API", validation_alias="APP_NAME")
+    version: str = Field(default="0.1.0", validation_alias="APP_VERSION")
+    jwt_secret_key: str = Field(default="change-me!", validation_alias="JWT_SECRET_KEY")
+    jwt_algorithm: str = Field(default="HS256", validation_alias="JWT_ALGORITHM")
+    jwt_expiration_minutes: str = Field(default="60", validation_alias="JWT_EXPIRATION_MINUTES")
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        validate_default=True,
+    )
 
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
-print(get_settings().model_dump())
-
- 

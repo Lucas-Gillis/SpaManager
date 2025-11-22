@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from app.core.auth import Role
+from ..core.auth import Role
 
 from typing import Optional
 

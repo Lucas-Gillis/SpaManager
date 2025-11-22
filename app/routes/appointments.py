@@ -3,9 +3,10 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Path, status
 from pydantic import BaseModel
 
-from app.core.auth import Role, auth_config
-from app.models.appointments import Appointment, AppointmentCreate, AppointmentStatus
-from app.services.appointments import InMemoryAppointmentService
+from ..core.auth import Role, auth_config
+from ..models.appointments import Appointment, AppointmentCreate, AppointmentStatus
+from ..services.appointments import InMemoryAppointmentService
+
 
 router = APIRouter()
 appointment_service = InMemoryAppointmentService()

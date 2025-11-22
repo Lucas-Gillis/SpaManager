@@ -2,9 +2,10 @@ from typing import List
 
 from fastapi import APIRouter, HTTPException, Request, status
 
-from app.core.auth import Role, auth_config, get_current_user
-from app.models.user import User
-from app.services.users import InMemoryUserService
+from ..core.auth import Role, auth_config, get_current_user
+from ..models.user import User
+from ..services.users import InMemoryUserService
+
 
 router = APIRouter()
 user_service = InMemoryUserService()

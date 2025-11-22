@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter
 
-from app.core.auth import auth_config
+from ..core.auth import auth_config
 
 router = APIRouter(prefix="/public", tags=["public"])
 
