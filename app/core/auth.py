@@ -90,6 +90,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         "/docs/oauth2-redirect",
         "/redoc",
     }
+    TOKEN_COOKIE_NAME = "spa_access_token"
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable]):
         if request.url.path in self.ALWAYS_PUBLIC_PATHS:
@@ -118,9 +119,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
     @staticmethod
     def _extract_token(request: Request) -> str:
         header = request.headers.get("Authorization")
-        if not header or not header.startswith("Bearer "):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
-        return header.split(" ", 1)[1]
+        if header and header.startswith("Bearer "):
+            return header.split(" ", 1)[1].strip()
+
+        cookie_token = request.cookies.get(AuthMiddleware.TOKEN_COOKIE_NAME)
+        if cookie_token:
+            return cookie_token
+
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
 
     @staticmethod
     def _enforce_role(user: AuthenticatedUser, minimum_role: Optional[Role]):
