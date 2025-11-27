@@ -5,10 +5,10 @@ from ..core.security import create_access_token
 from ..models.auth import TokenRequest, TokenResponse
 from ..services.users import InMemoryUserService
 
+from ..core.auth import AuthMiddleware
 
 router = APIRouter()
 user_service = InMemoryUserService()
-
 
 def _issue_access_token(payload: TokenRequest) -> str:
     user = user_service.authenticate(payload.username, payload.password)
@@ -37,7 +37,7 @@ async def issue_token(payload: TokenRequest) -> TokenResponse:
 async def issue_token_cookie(payload: TokenRequest, response: Response) -> TokenResponse:
     token = _issue_access_token(payload)
     response.set_cookie(
-        key="spa_access_token",
+        key=AuthMiddleware.TOKEN_COOKIE_NAME,
         value=token,
         httponly=True,
         secure=True,
