@@ -3,8 +3,10 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Request, status
 
 from ..core.auth import Role, auth_config, get_current_user
+from ..models.clients import Cliente
 from ..models.user import User
 from ..services.users import InMemoryUserService
+from .clients import client_service
 
 
 router = APIRouter()
@@ -24,3 +26,9 @@ async def read_profile(request: Request):
 @auth_config(minimum_role=Role.ADMIN, scopes={"staff:manage"})
 async def list_staff():
     return list(user_service.list_users())
+
+
+@router.get("/clients", response_model=List[Cliente], summary="List all clients (staff)")
+@auth_config(minimum_role=Role.STAFF)
+async def list_all_clients_for_staff():
+    return list(await client_service.list_clients())

@@ -1,14 +1,14 @@
 from .appointments import Appointment, AppointmentCreate, AppointmentStatus
 from .auth import TokenRequest, TokenResponse
-from .clients import Client, ClientCreate
+from .clients import Cliente, ClienteCreate
 from .user import User, UserCreate
 
 __all__ = [
     "Appointment",
     "AppointmentCreate",
     "AppointmentStatus",
-    "Client",
-    "ClientCreate",
+    "Cliente",
+    "ClienteCreate",
     "TokenRequest",
     "TokenResponse",
     "User",
