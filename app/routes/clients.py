@@ -9,7 +9,6 @@ from ..services.clients import MockClientService
 router = APIRouter()
 client_service = MockClientService()
 
-
 @router.get("/", response_model=List[Cliente], summary="List clients")
 @auth_config(minimum_role=Role.STAFF)
 async def list_clients():
@@ -19,7 +18,7 @@ async def list_clients():
 @router.get("/{client_id}", response_model=Cliente, summary="Retrieve client profile")
 @auth_config(minimum_role=Role.STAFF)
 async def get_client(client_id: int = Path(gt=0)):
-    client = await client_service.get_client(client_id)
+    client : Cliente | None = await client_service.get_client(client_id)
     if not client:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
     return client
