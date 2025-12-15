@@ -102,7 +102,6 @@ class InMemoryUserService:
 
     def authenticate(self, username: str, password: str) -> Optional[User]:
         record = self._users.get(username)
-        print(record)
         if not record:
             return None
 

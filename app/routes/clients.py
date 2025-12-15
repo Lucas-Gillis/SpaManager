@@ -1,10 +1,10 @@
 from typing import List, Literal
 from decimal import Decimal
 
-from fastapi import APIRouter, Body, HTTPException, Path, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
 from pydantic import BaseModel, Field
 
-from ..core.auth import Role, auth_config
+from ..core.auth import AuthenticatedUser, Role, auth_config, authorize
 from ..models.clients import Cliente, ClienteCreate
 from ..models.endereco import ClienteEnderecosUpdate, Endereco
 from ..services.clients import MockClientService
@@ -22,12 +22,17 @@ class ClienteSaldoCreditoUpdate(BaseModel):
 
 @router.get("/", response_model=List[Cliente], summary="List clients")
 @auth_config(minimum_role=Role.STAFF)
-async def list_clients():
+async def list_clients(
+    current_user: AuthenticatedUser = Depends(authorize),
+):
     return list(await client_service.list_clients())
 
 @router.get("/{client_id}", response_model=Cliente, summary="Retrieve client profile")
 @auth_config(minimum_role=Role.STAFF)
-async def get_client(client_id: int = Path(gt=0)):
+async def get_client(
+    client_id: int = Path(gt=0),
+    current_user: AuthenticatedUser = Depends(authorize),
+):
     client: Cliente | None = await client_service.get_client(client_id)
     if not client:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")
@@ -35,7 +40,10 @@ async def get_client(client_id: int = Path(gt=0)):
 
 @router.post("/", response_model=Cliente, status_code=status.HTTP_201_CREATED)
 @auth_config(minimum_role=Role.MANAGER, scopes={"clients:write"})
-async def create_client(payload: ClienteCreate):
+async def create_client(
+    payload: ClienteCreate,
+    current_user: AuthenticatedUser = Depends(authorize),
+):
     return await client_service.create_client(payload)
 
 @router.put(
@@ -47,6 +55,7 @@ async def create_client(payload: ClienteCreate):
 async def update_client_addresses(
     client_id: int = Path(gt=0),
     payload: ClienteEnderecosUpdate = Body(...),
+    current_user: AuthenticatedUser = Depends(authorize),
 ):
     client: Cliente | None = await client_service.get_client(client_id)
     if not client:
@@ -64,6 +73,7 @@ async def update_client_addresses(
 async def update_client_credit(
     client_id: int = Path(gt=0),
     payload: ClienteSaldoCreditoUpdate = Body(...),
+    current_user: AuthenticatedUser = Depends(authorize),
 ):
     try:
         updated: Cliente | None = await client_service.update_client_credit(
@@ -89,7 +99,10 @@ async def update_client_credit(
     summary="List client appointments",
 )
 @auth_config(minimum_role=Role.STAFF)
-async def list_client_appointments(client_id: int = Path(gt=0)):
+async def list_client_appointments(
+    client_id: int = Path(gt=0),
+    current_user: AuthenticatedUser = Depends(authorize),
+):
     client: Cliente | None = await client_service.get_client(client_id)
     if not client:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found")

@@ -93,25 +93,34 @@ class AuthMiddleware(BaseHTTPMiddleware):
     TOKEN_COOKIE_NAME = "spa_access_token"
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable]):
-        if request.url.path in self.ALWAYS_PUBLIC_PATHS:
-            return await call_next(request)
+        # Always attempt to extract a token so user info can be injected on every request.
+        try:
+            token = self._extract_token(request)
+        except HTTPException:
+            token = None
 
-        endpoint = request.scope.get("endpoint")
+        if token is not None:
+            try:
+                payload = TokenPayload(**decode_access_token(token))
+                user = build_user(payload)
+            except Exception:
+                # On any decoding/validation error, treat as anonymous guest.
+                user = AuthenticatedUser(
+                    username="",
+                    role=Role.GUEST,
+                    scopes=set(),
+                    full_name=None,
+                )
+        else:
+            # Anonymous/guest user when no valid token is present.
+            user = AuthenticatedUser(
+                username="",
+                role=Role.GUEST,
+                scopes=set(),
+                full_name=None,
+            )
 
-        if endpoint is None:
-            return await call_next(request)
-
-        config = get_auth_config(endpoint)
-
-        if not config.required:
-            return await call_next(request)
-
-        token = self._extract_token(request)
-        payload = TokenPayload(**decode_access_token(token))
-        user = build_user(payload)
-
-        self._enforce_role(user, config.minimum_role)
-        self._enforce_scopes(user, config.scopes)
+        # Inject user info into the request; per-endpoint enforcement is handled via dependencies.
         request.state.user = user
 
         return await call_next(request)
@@ -147,3 +156,53 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 def get_current_user(request: Request) -> AuthenticatedUser | None:
     return getattr(request.state, "user", None)
+
+
+def authorize(request: Request) -> AuthenticatedUser:
+    """
+    Dependency to enforce authentication and authorization for an endpoint.
+
+    It reads the AuthConfig attached by `@auth_config` on the resolved endpoint
+    and applies `required`, `minimum_role` and `scopes` checks against the
+    user injected by AuthMiddleware.
+    """
+    endpoint = request.scope.get("endpoint")
+    config = get_auth_config(endpoint)
+
+    user = get_current_user(request)
+    if user is None:
+        # Should not generally happen because middleware injects a guest user,
+        # but keep a safe default.
+        user = AuthenticatedUser(
+            username="",
+            role=Role.GUEST,
+            scopes=set(),
+            full_name=None,
+        )
+
+    if not config.required:
+        return user
+
+    # If auth is required, a guest user (no username) is considered unauthenticated.
+    if not user.username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthenticated",
+        )
+
+    # Enforce minimum role if configured.
+    if config.minimum_role is not None and user.role < config.minimum_role:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient role for resource",
+        )
+
+    # Enforce required scopes, if any.
+    missing = set(config.scopes).difference(user.scopes)
+    if missing:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Missing required scopes: {', '.join(sorted(missing))}",
+        )
+
+    return user
