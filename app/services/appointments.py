@@ -10,7 +10,7 @@ from ..models.appointments import Appointment, AppointmentCreate, AppointmentSta
 
 class InMemoryAppointmentService:
     def __init__(self):
-        now = datetime.utcnow()
+        now = datetime.now()
         self._sequence = count(1)
         self._appointments: Dict[int, Appointment] = {
             1: Appointment(
@@ -36,6 +36,12 @@ class InMemoryAppointmentService:
 
     def list_appointments(self) -> Iterable[Appointment]:
         return sorted(self._appointments.values(), key=lambda appt: appt.start_time)
+
+    def list_client_appointments(self, client_id: int) -> Iterable[Appointment]:
+        return sorted(
+            (appt for appt in self._appointments.values() if appt.client_id == client_id),
+            key=lambda appt: appt.start_time,
+        )
 
     def create_appointment(self, request: AppointmentCreate) -> Appointment:
         identifier = next(self._sequence)

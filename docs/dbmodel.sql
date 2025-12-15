@@ -75,6 +75,14 @@ CREATE TABLE cliente (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 );
 
+CREATE TABLE historico_credito (
+    id                  BIGSERIAL PRIMARY KEY,
+    cliente_id          BIGINT REFERENCES cliente(id),
+    valor_movimentado   NUMERIC(50,2),
+    tipo_movimentacao   TEXT CHECK (tipo_movimentacao IN ('ADD', 'REMOVE', 'CONVERT')) --CONVERT = converteu horas e servicos em credito liquido
+    data_movimentacao   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+)
+
 -- Endereços de clientes
 -- Um cliente pode ter mais de um endereço
 -- Criar os constraints para impedir repeticao de tipo de endereço em um mesmo cliente
